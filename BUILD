@@ -1,6 +1,7 @@
 cc_library(
     name = "kero_mpsc",
     hdrs = ["src/kero_mpsc.h"],
+    includes = ["src"],
     visibility = ["//visibility:public"],
 )
 
