@@ -55,7 +55,10 @@ private:
   std::condition_variable condition_variable_{};
 };
 
+} // namespace impl
+
 template <typename T> struct Tx {
+  Tx(const std::shared_ptr<impl::Queue<T>> &queue) : queue_{queue} {}
   Tx(Tx &&) = default;
   Tx &operator=(Tx &&) = default;
   ~Tx() = default;
@@ -63,23 +66,16 @@ template <typename T> struct Tx {
   Tx(const Tx &) = delete;
   Tx &operator=(const Tx &) = delete;
 
-  auto clone() const -> std::unique_ptr<Tx<T>> { return create(queue_); }
+  auto clone() const -> Tx<T> { return Tx<T>{queue_}; }
 
   auto send(T &&item) const -> void { queue_->push(std::move(item)); }
 
-  static auto create(const std::shared_ptr<Queue<T>> &queue)
-      -> std::unique_ptr<Tx<T>> {
-    return std::unique_ptr<Tx<T>>(new Tx<T>{queue});
-  }
-
 private:
-  // Private constructor to force use of create() method.
-  Tx(const std::shared_ptr<Queue<T>> &queue) : queue_{queue} {}
-
-  std::shared_ptr<Queue<T>> queue_;
+  std::shared_ptr<impl::Queue<T>> queue_;
 };
 
 template <typename T> struct Rx {
+  Rx(const std::shared_ptr<impl::Queue<T>> &queue) : queue_{queue} {}
   Rx(Rx &&) = default;
   Rx &operator=(Rx &&) = default;
   ~Rx() = default;
@@ -89,28 +85,14 @@ template <typename T> struct Rx {
 
   auto receive() const -> T { return queue_->pop(); }
 
-  static auto create(const std::shared_ptr<Queue<T>> &queue)
-      -> std::unique_ptr<Rx<T>> {
-    return std::unique_ptr<Rx<T>>(new Rx<T>{queue});
-  }
-
 private:
-  // Private constructor to force use of create() method.
-  Rx(const std::shared_ptr<Queue<T>> &queue) : queue_{queue} {}
-
-  std::shared_ptr<Queue<T>> queue_;
+  std::shared_ptr<impl::Queue<T>> queue_;
 };
-
-} // namespace impl
-
-template <typename T> using Queue = std::shared_ptr<impl::Queue<T>>;
-template <typename T> using Tx = std::unique_ptr<impl::Tx<T>>;
-template <typename T> using Rx = std::unique_ptr<impl::Rx<T>>;
 
 template <typename T> auto channel() -> std::pair<Tx<T>, Rx<T>> {
   auto queue = impl::Queue<T>::create();
-  auto tx = impl::Tx<T>::create(queue);
-  auto rx = impl::Rx<T>::create(queue);
+  auto tx = Tx<T>{queue};
+  auto rx = Rx<T>{queue};
   return std::make_pair(std::move(tx), std::move(rx));
 }
 

@@ -25,15 +25,11 @@ auto main() -> int {
   // create thread to send message
   std::thread sender([tx = std::move(tx)] {
     auto message = MyMessage{1, "Hello, World!"};
-    tx->send(std::move(message));
+    tx.send(std::move(message));
   });
 
-  // tx is moved from, so it is now empty
-  assert(!tx);
-  // auto tx2 = tx; // error: use of deleted function
-
   // receive message
-  auto message = rx->receive();
+  auto message = rx.receive();
   assert(message.id == 1);
   assert(message.text == "Hello, World!");
 
