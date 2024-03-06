@@ -1,5 +1,7 @@
 """
-mpsc
+kero_mpsc
 """
 
-module("mpsc", "0.1.0")
+module(name = "kero_mpsc", version = "0.1.0")
+
+bazel_dep(name = "googletest", version = "1.14.0")

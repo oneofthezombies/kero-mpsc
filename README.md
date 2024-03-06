@@ -1,4 +1,4 @@
-# MPSC
+# Kero MPSC
 
 A memory-safe "multiple producer single consumer queue" implementation written in C++.  
 
