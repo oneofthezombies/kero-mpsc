@@ -22,6 +22,10 @@ You can get IDE support by running the command below.
 bazel run @hedron_compile_commands//:refresh_all
 ```
 
-## Reference
+For more information, please refer to the link below.  
+
+https://github.com/hedronvision/bazel-compile-commands-extractor
+
+## References
 
 [February 2024 Whitehouse Technical Report](https://www.whitehouse.gov/wp-content/uploads/2024/02/Final-ONCD-Technical-Report.pdf)  
