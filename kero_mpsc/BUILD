@@ -7,5 +7,8 @@ cc_library(
 cc_test(
     name = "kero_mpsc_test",
     srcs = ["kero_mpsc_test.cc"],
-    deps = [":kero_mpsc"],
+    deps = [
+        ":kero_mpsc",
+        "@googletest//:gtest_main",
+    ],
 )
