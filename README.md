@@ -16,6 +16,12 @@ TODO
 This project was developed based on Bazel.  
 Please ensure `bazel` command and after calling the `bazel --version` command, check whether the version is higher than `7.0.0`.  
 
+You can get IDE support by running the command below.  
+
+```sh
+bazel run @hedron_compile_commands//:refresh_all
+```
+
 ## Reference
 
 [February 2024 Whitehouse Technical Report](https://www.whitehouse.gov/wp-content/uploads/2024/02/Final-ONCD-Technical-Report.pdf)  
