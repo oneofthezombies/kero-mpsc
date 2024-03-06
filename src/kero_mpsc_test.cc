@@ -156,13 +156,13 @@ TEST(RxTest, Receive) {
 }
 
 TEST(MpscTest, Create) {
-  auto [tx, rx] = kero::mpsc::mpsc<Message>();
+  auto [tx, rx] = kero::mpsc::channel<Message>();
   ASSERT_TRUE(tx);
   ASSERT_TRUE(rx);
 }
 
 TEST(MpscTest, SendAndReceive) {
-  auto [tx, rx] = kero::mpsc::mpsc<Message>();
+  auto [tx, rx] = kero::mpsc::channel<Message>();
   ASSERT_TRUE(tx);
   ASSERT_TRUE(rx);
 

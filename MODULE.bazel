@@ -2,7 +2,7 @@
 kero_mpsc
 """
 
-module(name = "kero_mpsc", version = "0.2.0")
+module(name = "kero_mpsc", version = "0.3.0")
 
 bazel_dep(name = "googletest", version = "1.14.0")
 

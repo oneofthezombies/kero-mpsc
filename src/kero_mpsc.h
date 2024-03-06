@@ -107,7 +107,7 @@ template <typename T> using Queue = std::shared_ptr<impl::Queue<T>>;
 template <typename T> using Tx = std::unique_ptr<impl::Tx<T>>;
 template <typename T> using Rx = std::unique_ptr<impl::Rx<T>>;
 
-template <typename T> auto mpsc() -> std::pair<Tx<T>, Rx<T>> {
+template <typename T> auto channel() -> std::pair<Tx<T>, Rx<T>> {
   auto queue = impl::Queue<T>::create();
   auto tx = impl::Tx<T>::create(queue);
   auto rx = impl::Rx<T>::create(queue);
