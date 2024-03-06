@@ -1,6 +1,5 @@
 cc_library(
     name = "kero_mpsc",
-    srcs = [],
     hdrs = ["kero_mpsc.h"],
 )
 
@@ -11,4 +10,16 @@ cc_test(
         ":kero_mpsc",
         "@googletest//:gtest_main",
     ],
+)
+
+cc_binary(
+    name = "kero_mpsc_example",
+    srcs = ["kero_mpsc_example.cc"],
+    deps = [":kero_mpsc"],
+)
+
+cc_binary(
+    name = "kero_mpsc_example_to",
+    srcs = ["kero_mpsc_example_to.cc"],
+    deps = [":kero_mpsc"],
 )

@@ -3,5 +3,9 @@
     "--header-insertion=never",
     "--compile-commands-dir=${workspaceFolder}/",
     "--query-driver=**"
-  ]
+  ],
+  "[cpp]": {
+    "editor.defaultFormatter": "llvm-vs-code-extensions.vscode-clangd",
+    "editor.formatOnSave": true
+  }
 }
