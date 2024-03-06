@@ -1,11 +1,12 @@
 cc_library(
     name = "kero_mpsc",
-    hdrs = ["kero_mpsc.h"],
+    hdrs = ["src/kero_mpsc.h"],
+    visibility = ["//visibility:public"],
 )
 
 cc_test(
     name = "kero_mpsc_test",
-    srcs = ["kero_mpsc_test.cc"],
+    srcs = ["src/kero_mpsc_test.cc"],
     deps = [
         ":kero_mpsc",
         "@googletest//:gtest_main",
@@ -14,12 +15,12 @@ cc_test(
 
 cc_binary(
     name = "kero_mpsc_example",
-    srcs = ["kero_mpsc_example.cc"],
+    srcs = ["src/kero_mpsc_example.cc"],
     deps = [":kero_mpsc"],
 )
 
 cc_binary(
     name = "kero_mpsc_example_to",
-    srcs = ["kero_mpsc_example_to.cc"],
+    srcs = ["src/kero_mpsc_example_to.cc"],
     deps = [":kero_mpsc"],
 )
