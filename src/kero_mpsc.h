@@ -9,7 +9,7 @@
 namespace kero {
 
 template <typename T>
-concept Noncopyable =                         //
+concept MoveOnly =                            //
     std::is_object_v<T> &&                    //
     std::swappable<T> &&                      //
     std::constructible_from<T, T> &&          //
@@ -17,9 +17,9 @@ concept Noncopyable =                         //
     !std::constructible_from<T, T &> &&       //
     !std::constructible_from<T, const T &> && //
     std::convertible_to<T, T> &&              //
-    !std::convertible_to<T, const T> &&       //
+    std::convertible_to<T, const T> &&        //
     !std::convertible_to<T, T &> &&           //
-    !std::convertible_to<T, const T &> &&     //
+    std::convertible_to<T, const T &> &&      //
     std::assignable_from<T &, T> &&           //
     !std::assignable_from<T &, const T> &&    //
     !std::assignable_from<T &, T &> &&        //
@@ -30,7 +30,7 @@ namespace mpsc {
 namespace impl {
 
 template <typename T>
-  requires Noncopyable<T>
+  requires MoveOnly<T>
 class Queue {
 public:
   class Builder {
