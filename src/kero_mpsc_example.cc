@@ -22,7 +22,7 @@ struct MyMessage {
 
 auto main() -> int {
   // create message passing channel
-  auto [tx, rx] = kero::mpsc::Channel<MyMessage>::Create();
+  auto [tx, rx] = kero::mpsc::Channel<MyMessage>::Builder{}.Build();
 
   // create thread to send message
   std::thread sender([tx = std::move(tx)] {

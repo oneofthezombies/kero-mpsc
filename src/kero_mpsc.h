@@ -12,6 +12,21 @@ namespace impl {
 
 template <typename T> class Queue {
 public:
+  class Builder {
+  public:
+    Builder() = default;
+    ~Builder() = default;
+
+    Builder(Builder &&) = delete;
+    Builder(const Builder &) = delete;
+    auto operator=(Builder &&) -> Builder & = delete;
+    auto operator=(const Builder &) -> Builder & = delete;
+
+    auto Build() -> std::shared_ptr<Queue<T>> {
+      return std::shared_ptr<Queue<T>>{new Queue<T>{}};
+    }
+  };
+
   // T must be move constructible and move assignable but not copy
   // constructible or copy assignable.
   static_assert(std::is_move_constructible<T>::value,
@@ -24,32 +39,26 @@ public:
 
   ~Queue() = default;
 
-  // No copy or move operations.
-  Queue(const Queue &) = delete;
   Queue(Queue &&) = delete;
-  Queue &operator=(const Queue &) = delete;
+  Queue(const Queue &) = delete;
   Queue &operator=(Queue &&) = delete;
+  Queue &operator=(const Queue &) = delete;
 
   auto Push(T &&item) -> void {
-    std::lock_guard<std::mutex> lock(mutex_);
+    std::lock_guard<std::mutex> lock{mutex_};
     queue_.push(std::move(item));
     condition_variable_.notify_one();
   }
 
   auto Pop() -> T {
-    std::unique_lock<std::mutex> lock(mutex_);
+    std::unique_lock<std::mutex> lock{mutex_};
     condition_variable_.wait(lock, [this] { return !queue_.empty(); });
     auto item = std::move(queue_.front());
     queue_.pop();
     return item;
   }
 
-  static auto Create() -> std::shared_ptr<Queue<T>> {
-    return std::shared_ptr<Queue<T>>(new Queue<T>{});
-  }
-
 private:
-  // Private constructor to force use of create() method.
   Queue() = default;
 
   std::queue<T> queue_{};
@@ -62,9 +71,10 @@ private:
 template <typename T> class Tx {
 public:
   Tx(const std::shared_ptr<impl::Queue<T>> &queue) : queue_{queue} {}
+
   Tx(Tx &&) = default;
-  Tx &operator=(Tx &&) = default;
   ~Tx() = default;
+  Tx &operator=(Tx &&) = default;
 
   Tx(const Tx &) = delete;
   Tx &operator=(const Tx &) = delete;
@@ -80,9 +90,10 @@ private:
 template <typename T> class Rx {
 public:
   Rx(const std::shared_ptr<impl::Queue<T>> &queue) : queue_{queue} {}
+
   Rx(Rx &&) = default;
-  Rx &operator=(Rx &&) = default;
   ~Rx() = default;
+  Rx &operator=(Rx &&) = default;
 
   Rx(const Rx &) = delete;
   Rx &operator=(const Rx &) = delete;
@@ -94,25 +105,35 @@ private:
 };
 
 template <typename T> struct Channel {
+  class Builder {
+  public:
+    Builder() = default;
+    ~Builder() = default;
+
+    Builder(Builder &&) = delete;
+    Builder(const Builder &) = delete;
+    auto operator=(Builder &&) -> Builder & = delete;
+    auto operator=(const Builder &) -> Builder & = delete;
+
+    auto Build() -> Channel<T> {
+      auto queue = typename impl::Queue<T>::Builder{}.Build();
+      auto tx = Tx<T>{queue};
+      auto rx = Rx<T>{queue};
+      return Channel<T>{std::move(tx), std::move(rx)};
+    }
+  };
+
   Tx<T> tx;
   Rx<T> rx;
 
   Channel(Channel &&) = default;
-  auto operator=(Channel &&) -> Channel & = default;
   ~Channel() = default;
+  auto operator=(Channel &&) -> Channel & = default;
 
   Channel(const Channel &) = delete;
   auto operator=(const Channel &) -> Channel & = delete;
 
-  static auto Create() -> Channel<T> {
-    auto queue = impl::Queue<T>::Create();
-    auto tx = Tx<T>{queue};
-    auto rx = Rx<T>{queue};
-    return Channel<T>{std::move(tx), std::move(rx)};
-  }
-
 private:
-  // Private constructor to force use of create() method.
   Channel(Tx<T> &&tx, Rx<T> &&rx) : tx{std::move(tx)}, rx{std::move(rx)} {}
 };
 

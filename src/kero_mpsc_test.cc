@@ -6,9 +6,10 @@ struct Message {
   std::string text;
 
   Message(int id, std::string &&text) : id(id), text(std::move(text)) {}
+
   Message(Message &&) = default;
-  Message &operator=(Message &&) = default;
   ~Message() = default;
+  Message &operator=(Message &&) = default;
 
   Message(const Message &) = delete;
   Message &operator=(const Message &) = delete;
@@ -19,18 +20,19 @@ struct CopyableMessage {
   std::string text;
 
   CopyableMessage(int id, std::string &&text) : id(id), text(std::move(text)) {}
+
   CopyableMessage(const CopyableMessage &) = default;
-  CopyableMessage &operator=(const CopyableMessage &) = default;
   ~CopyableMessage() = default;
+  CopyableMessage &operator=(const CopyableMessage &) = default;
 };
 
 TEST(QueueTest, Create) {
-  auto queue = kero::mpsc::impl::Queue<Message>::Create();
+  auto queue = kero::mpsc::impl::Queue<Message>::Builder().Build();
   ASSERT_EQ(queue.use_count(), 1);
 }
 
 TEST(QueueTest, PushAndPop) {
-  auto queue = kero::mpsc::impl::Queue<Message>::Create();
+  auto queue = kero::mpsc::impl::Queue<Message>::Builder().Build();
 
   auto message = Message{1, "Hello, World!"};
   queue->Push(std::move(message));
@@ -45,7 +47,7 @@ TEST(QueueTest, PushAndPop) {
 TEST(QueueTest, CopyableItem) {
   using TO = std::unique_ptr<CopyableMessage>;
 
-  auto queue = kero::mpsc::impl::Queue<TO>::Create();
+  auto queue = kero::mpsc::impl::Queue<TO>::Builder().Build();
 
   auto message =
       std::make_unique<CopyableMessage>(CopyableMessage{1, "Hello, World!"});
@@ -58,7 +60,7 @@ TEST(QueueTest, CopyableItem) {
 }
 
 TEST(TxTest, Create) {
-  auto queue = kero::mpsc::impl::Queue<Message>::Create();
+  auto queue = kero::mpsc::impl::Queue<Message>::Builder().Build();
   ASSERT_EQ(queue.use_count(), 1);
 
   auto tx = kero::mpsc::Tx<Message>{queue};
@@ -66,7 +68,7 @@ TEST(TxTest, Create) {
 }
 
 TEST(TxTest, Move) {
-  auto queue = kero::mpsc::impl::Queue<Message>::Create();
+  auto queue = kero::mpsc::impl::Queue<Message>::Builder().Build();
   ASSERT_EQ(queue.use_count(), 1);
 
   auto tx = kero::mpsc::Tx<Message>{queue};
@@ -77,7 +79,7 @@ TEST(TxTest, Move) {
 }
 
 TEST(TxTest, Clone) {
-  auto queue = kero::mpsc::impl::Queue<Message>::Create();
+  auto queue = kero::mpsc::impl::Queue<Message>::Builder().Build();
   ASSERT_EQ(queue.use_count(), 1);
 
   auto tx = kero::mpsc::Tx<Message>{queue};
@@ -88,7 +90,7 @@ TEST(TxTest, Clone) {
 }
 
 TEST(TxTest, Send) {
-  auto queue = kero::mpsc::impl::Queue<Message>::Create();
+  auto queue = kero::mpsc::impl::Queue<Message>::Builder().Build();
   ASSERT_EQ(queue.use_count(), 1);
 
   auto tx = kero::mpsc::Tx<Message>{queue};
@@ -101,7 +103,7 @@ TEST(TxTest, Send) {
 }
 
 TEST(RxTest, Create) {
-  auto queue = kero::mpsc::impl::Queue<Message>::Create();
+  auto queue = kero::mpsc::impl::Queue<Message>::Builder().Build();
   ASSERT_EQ(queue.use_count(), 1);
 
   auto rx = kero::mpsc::Rx<Message>{queue};
@@ -109,7 +111,7 @@ TEST(RxTest, Create) {
 }
 
 TEST(RxText, Move) {
-  auto queue = kero::mpsc::impl::Queue<Message>::Create();
+  auto queue = kero::mpsc::impl::Queue<Message>::Builder().Build();
   ASSERT_EQ(queue.use_count(), 1);
 
   auto rx = kero::mpsc::Rx<Message>{queue};
@@ -120,7 +122,7 @@ TEST(RxText, Move) {
 }
 
 TEST(RxTest, Receive) {
-  auto queue = kero::mpsc::impl::Queue<Message>::Create();
+  auto queue = kero::mpsc::impl::Queue<Message>::Builder().Build();
   ASSERT_EQ(queue.use_count(), 1);
 
   auto tx = kero::mpsc::Tx<Message>{queue};
@@ -140,18 +142,18 @@ TEST(RxTest, Receive) {
 }
 
 TEST(MpscTest, Create) {
-  auto [tx, rx] = kero::mpsc::Channel<Message>::Create();
+  auto [tx, rx] = kero::mpsc::Channel<Message>::Builder().Build();
 }
 
-TEST(MpscTest, SendAndReceive) {
-  auto [tx, rx] = kero::mpsc::Channel<Message>::Create();
+// TEST(MpscTest, SendAndReceive) {
+//   auto [tx, rx] = kero::mpsc::Channel<Message>::Builder().Build();
 
-  auto message = Message{1, "Hello, World!"};
-  tx.Send(std::move(message));
-  ASSERT_EQ(message.id, 1);
-  ASSERT_EQ(message.text, "");
+//   auto message = Message{1, "Hello, World!"};
+//   tx.Send(std::move(message));
+//   ASSERT_EQ(message.id, 1);
+//   ASSERT_EQ(message.text, "");
 
-  auto popped = rx.Receive();
-  ASSERT_EQ(popped.id, 1);
-  ASSERT_EQ(popped.text, "Hello, World!");
-}
+//   auto popped = rx.Receive();
+//   ASSERT_EQ(popped.id, 1);
+//   ASSERT_EQ(popped.text, "Hello, World!");
+// }

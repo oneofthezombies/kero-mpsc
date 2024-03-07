@@ -17,7 +17,7 @@ using MyTransferObject = std::unique_ptr<MyMessage>;
 
 auto main() -> int {
   // create message passing channel
-  auto [tx, rx] = kero::mpsc::Channel<MyTransferObject>::Create();
+  auto [tx, rx] = kero::mpsc::Channel<MyTransferObject>::Builder{}.Build();
 
   // create thread to send message
   std::thread sender([tx = std::move(tx)] {

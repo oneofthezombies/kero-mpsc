@@ -9,22 +9,22 @@ However, the status of the C++ programming language in the current compiler indu
 
 ## How to Use
 
-Create `tx` and `rx` using `kero::mpsc::channel<T>()` function.  
-When you call `tx.send(item)`, an object is sent.  
-You can receive an object by calling `auto item = rx.receive()`. At this time, blocking occurs until a object is received.
+Create `tx` and `rx` using `kero::mpsc::Channel<MyMessage>::Builder{}.Build();` function.  
+When you call `tx.Send(item)`, an object is sent.  
+You can receive an object by calling `auto item = rx.Receive()`. At this time, blocking occurs until a object is received.
 
 ```cpp
 // create message passing channel
-auto [tx, rx] = kero::mpsc::channel<MyMessage>();
+auto [tx, rx] = kero::mpsc::Channel<MyMessage>::Builder{}.Build();
 
 // create thread to send message
 std::thread sender([tx = std::move(tx)] {
   auto message = MyMessage{1, "Hello, World!"};
-  tx.send(std::move(message));
+  tx.Send(std::move(message));
 });
 
 // receive message
-auto message = rx.receive();
+auto message = rx.Receive();
 assert(message.id == 1);
 assert(message.text == "Hello, World!");
 ```
