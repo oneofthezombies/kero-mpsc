@@ -6,6 +6,7 @@ struct MyMessage {
   int id{};
   std::string text{};
 
+  MyMessage(int id, std::string &&text) : id(id), text(std::move(text)) {}
   MyMessage(const MyMessage &) = default;
   MyMessage &operator=(const MyMessage &) = default;
   ~MyMessage() = default;
@@ -16,17 +17,17 @@ using MyTransferObject = std::unique_ptr<MyMessage>;
 
 auto main() -> int {
   // create message passing channel
-  auto [tx, rx] = kero::mpsc::channel<MyTransferObject>();
+  auto [tx, rx] = kero::mpsc::Channel<MyTransferObject>::Create();
 
   // create thread to send message
   std::thread sender([tx = std::move(tx)] {
     MyTransferObject to =
         std::make_unique<MyMessage>(MyMessage{1, "Hello, World!"});
-    tx.send(std::move(to));
+    tx.Send(std::move(to));
   });
 
   // receive message
-  auto message = rx.receive();
+  auto message = rx.Receive();
   assert(message->id == 1);
   assert(message->text == "Hello, World!");
 

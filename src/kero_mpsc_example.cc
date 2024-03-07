@@ -6,6 +6,8 @@ struct MyMessage {
   int id{};
   std::string text{};
 
+  MyMessage(int id, std::string &&text) : id(id), text(std::move(text)) {}
+
   // ensure that MyMessage is move constructible and move assignable.
   // Kero MPSC is designed to work with move only types.
   // If your type is not move only, you can use std::unique_ptr to make it move
@@ -20,16 +22,16 @@ struct MyMessage {
 
 auto main() -> int {
   // create message passing channel
-  auto [tx, rx] = kero::mpsc::channel<MyMessage>();
+  auto [tx, rx] = kero::mpsc::Channel<MyMessage>::Create();
 
   // create thread to send message
   std::thread sender([tx = std::move(tx)] {
     auto message = MyMessage{1, "Hello, World!"};
-    tx.send(std::move(message));
+    tx.Send(std::move(message));
   });
 
   // receive message
-  auto message = rx.receive();
+  auto message = rx.Receive();
   assert(message.id == 1);
   assert(message.text == "Hello, World!");
 
