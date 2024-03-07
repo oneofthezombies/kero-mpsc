@@ -1,16 +1,37 @@
 #ifndef KERO_MPSC_H
 #define KERO_MPSC_H
 
+#include <concepts>
 #include <mutex>
 #include <queue>
 #include <utility>
 
 namespace kero {
+
+template <typename T>
+concept Noncopyable =                         //
+    std::is_object_v<T> &&                    //
+    std::swappable<T> &&                      //
+    std::constructible_from<T, T> &&          //
+    !std::constructible_from<T, const T> &&   //
+    !std::constructible_from<T, T &> &&       //
+    !std::constructible_from<T, const T &> && //
+    std::convertible_to<T, T> &&              //
+    !std::convertible_to<T, const T> &&       //
+    !std::convertible_to<T, T &> &&           //
+    !std::convertible_to<T, const T &> &&     //
+    std::assignable_from<T &, T> &&           //
+    !std::assignable_from<T &, const T> &&    //
+    !std::assignable_from<T &, T &> &&        //
+    !std::assignable_from<T &, const T &>;
+
 namespace mpsc {
 
 namespace impl {
 
-template <typename T> class Queue {
+template <typename T>
+  requires Noncopyable<T>
+class Queue {
 public:
   class Builder {
   public:
@@ -26,16 +47,6 @@ public:
       return std::shared_ptr<Queue<T>>{new Queue<T>{}};
     }
   };
-
-  // T must be move constructible and move assignable but not copy
-  // constructible or copy assignable.
-  static_assert(std::is_move_constructible<T>::value,
-                "T must be move constructible");
-  static_assert(std::is_move_assignable<T>::value, "T must be move assignable");
-  static_assert(!std::is_copy_constructible<T>::value,
-                "T must not be copy constructible");
-  static_assert(!std::is_copy_assignable<T>::value,
-                "T must not be copy assignable");
 
   ~Queue() = default;
 

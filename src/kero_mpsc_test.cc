@@ -145,15 +145,15 @@ TEST(MpscTest, Create) {
   auto [tx, rx] = kero::mpsc::Channel<Message>::Builder().Build();
 }
 
-// TEST(MpscTest, SendAndReceive) {
-//   auto [tx, rx] = kero::mpsc::Channel<Message>::Builder().Build();
+TEST(MpscTest, SendAndReceive) {
+  auto [tx, rx] = kero::mpsc::Channel<Message>::Builder().Build();
 
-//   auto message = Message{1, "Hello, World!"};
-//   tx.Send(std::move(message));
-//   ASSERT_EQ(message.id, 1);
-//   ASSERT_EQ(message.text, "");
+  auto message = Message{1, "Hello, World!"};
+  tx.Send(std::move(message));
+  ASSERT_EQ(message.id, 1);
+  ASSERT_EQ(message.text, "");
 
-//   auto popped = rx.Receive();
-//   ASSERT_EQ(popped.id, 1);
-//   ASSERT_EQ(popped.text, "Hello, World!");
-// }
+  auto popped = rx.Receive();
+  ASSERT_EQ(popped.id, 1);
+  ASSERT_EQ(popped.text, "Hello, World!");
+}
