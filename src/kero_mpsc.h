@@ -2,9 +2,10 @@
 #define KERO_MPSC_H
 
 #include <concepts>
+#include <condition_variable>
+#include <memory>
 #include <mutex>
 #include <queue>
-#include <utility>
 
 namespace kero {
 
