@@ -9,7 +9,7 @@ However, the status of the C++ programming language in the current compiler indu
 
 ## How to Use
 
-Create `tx` and `rx` using `kero::mpsc::Channel<MyMessage>::Builder{}.Build();` function.  
+Create `tx` and `rx` using `kero::mpsc::Channel<MyMessage>::Builder{}.Build()` function.  
 When you call `tx.Send(item)`, an object is sent.  
 You can receive an object by calling `auto item = rx.Receive()`. At this time, blocking occurs until a object is received.
 
