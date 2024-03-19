@@ -81,6 +81,12 @@ public:
     return item;
   }
 
+  auto TryPopAll() -> std::queue<T> {
+    std::lock_guard<std::mutex> lock{mutex_};
+    auto queue = std::move(queue_);
+    return queue;
+  }
+
 private:
   Queue() = default;
 
@@ -115,6 +121,7 @@ public:
   KERO_STRUCT_TYPE_MOVE(Rx);
 
   auto Receive() const -> T { return queue_->Pop(); }
+  auto TryReceiveAll() const -> std::queue<T> { return queue_->TryPopAll(); }
 
 private:
   std::shared_ptr<impl::Queue<T>> queue_;

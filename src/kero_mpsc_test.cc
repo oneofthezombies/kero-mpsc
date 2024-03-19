@@ -44,6 +44,66 @@ TEST(QueueTest, PushAndPop) {
   ASSERT_EQ(popped.text, "Hello, World!");
 }
 
+TEST(QueueTest, TryPopAll) {
+  auto queue = kero::mpsc::impl::Queue<Message>::Builder{}.Build();
+
+  {
+    auto poppeds = queue->TryPopAll();
+    ASSERT_EQ(poppeds.size(), 0);
+  }
+
+  {
+    auto message = Message{1, "Hello, World!"};
+    queue->Push(std::move(message));
+    ASSERT_EQ(message.id, 1);
+    ASSERT_EQ(message.text, "");
+  }
+
+  {
+    auto poppeds = queue->TryPopAll();
+    ASSERT_EQ(poppeds.size(), 1);
+    auto popped = std::move(poppeds.front());
+    ASSERT_EQ(popped.id, 1);
+    ASSERT_EQ(popped.text, "Hello, World!");
+  }
+
+  {
+    auto poppeds = queue->TryPopAll();
+    ASSERT_EQ(poppeds.size(), 0);
+  }
+
+  {
+    auto message = Message{1, "Hello, World!"};
+    queue->Push(std::move(message));
+    ASSERT_EQ(message.id, 1);
+    ASSERT_EQ(message.text, "");
+  }
+
+  {
+    auto message = Message{2, "Hello, World!"};
+    queue->Push(std::move(message));
+    ASSERT_EQ(message.id, 2);
+    ASSERT_EQ(message.text, "");
+  }
+
+  {
+    auto poppeds = queue->TryPopAll();
+    ASSERT_EQ(poppeds.size(), 2);
+    auto popped = std::move(poppeds.front());
+    ASSERT_EQ(popped.id, 1);
+    ASSERT_EQ(popped.text, "Hello, World!");
+    poppeds.pop();
+    popped = std::move(poppeds.front());
+    ASSERT_EQ(popped.id, 2);
+    ASSERT_EQ(popped.text, "Hello, World!");
+  }
+
+  {
+    auto poppeds = queue->TryPopAll();
+    ASSERT_EQ(poppeds.size(), 0);
+  }
+}
+
 TEST(QueueTest, CopyableItem) {
   using TO = std::unique_ptr<CopyableMessage>;
 
@@ -139,6 +199,73 @@ TEST(RxTest, Receive) {
   auto popped = rx.Receive();
   ASSERT_EQ(popped.id, 1);
   ASSERT_EQ(popped.text, "Hello, World!");
+}
+
+TEST(RxTest, TryReceiveAll) {
+  auto queue = kero::mpsc::impl::Queue<Message>::Builder{}.Build();
+  ASSERT_EQ(queue.use_count(), 1);
+
+  auto tx = kero::mpsc::Tx<Message>{queue};
+  ASSERT_EQ(queue.use_count(), 2);
+
+  auto rx = kero::mpsc::Rx<Message>{queue};
+  ASSERT_EQ(queue.use_count(), 3);
+
+  {
+    auto poppeds = rx.TryReceiveAll();
+    ASSERT_EQ(poppeds.size(), 0);
+  }
+
+  {
+    auto message = Message{1, "Hello, World!"};
+    tx.Send(std::move(message));
+    ASSERT_EQ(message.id, 1);
+    ASSERT_EQ(message.text, "");
+  }
+
+  {
+    auto poppeds = rx.TryReceiveAll();
+    ASSERT_EQ(poppeds.size(), 1);
+    auto popped = std::move(poppeds.front());
+    ASSERT_EQ(popped.id, 1);
+    ASSERT_EQ(popped.text, "Hello, World!");
+  }
+
+  {
+    auto poppeds = rx.TryReceiveAll();
+    ASSERT_EQ(poppeds.size(), 0);
+  }
+
+  {
+    auto message = Message{1, "Hello, World!"};
+    tx.Send(std::move(message));
+    ASSERT_EQ(message.id, 1);
+    ASSERT_EQ(message.text, "");
+  }
+
+  {
+    auto message = Message{2, "Hello, World!"};
+    tx.Send(std::move(message));
+    ASSERT_EQ(message.id, 2);
+    ASSERT_EQ(message.text, "");
+  }
+
+  {
+    auto poppeds = rx.TryReceiveAll();
+    ASSERT_EQ(poppeds.size(), 2);
+    auto popped = std::move(poppeds.front());
+    ASSERT_EQ(popped.id, 1);
+    ASSERT_EQ(popped.text, "Hello, World!");
+    poppeds.pop();
+    popped = std::move(poppeds.front());
+    ASSERT_EQ(popped.id, 2);
+    ASSERT_EQ(popped.text, "Hello, World!");
+  }
+
+  {
+    auto poppeds = rx.TryReceiveAll();
+    ASSERT_EQ(poppeds.size(), 0);
+  }
 }
 
 TEST(MpscTest, Create) {
