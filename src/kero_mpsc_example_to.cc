@@ -6,9 +6,9 @@ struct MyMessage {
   int id{};
   std::string text{};
 
-  MyMessage(int id, std::string &&text) : id(id), text(std::move(text)) {}
-  MyMessage(const MyMessage &) = default;
-  MyMessage &operator=(const MyMessage &) = default;
+  MyMessage(int id, std::string&& text) : id(id), text(std::move(text)) {}
+  MyMessage(const MyMessage&) = default;
+  MyMessage& operator=(const MyMessage&) = default;
   ~MyMessage() = default;
 };
 

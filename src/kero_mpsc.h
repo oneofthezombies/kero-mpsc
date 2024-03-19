@@ -1,7 +1,6 @@
 #ifndef KERO_MPSC_H
 #define KERO_MPSC_H
 
-#include <concepts>
 #include <condition_variable>
 #include <memory>
 #include <mutex>
@@ -10,21 +9,22 @@
 namespace kero {
 
 template <typename T>
-concept MoveOnly =                            //
-    std::is_object_v<T> &&                    //
-    std::swappable<T> &&                      //
-    std::constructible_from<T, T> &&          //
-    !std::constructible_from<T, const T> &&   //
-    !std::constructible_from<T, T &> &&       //
-    !std::constructible_from<T, const T &> && //
-    std::convertible_to<T, T> &&              //
-    std::convertible_to<T, const T> &&        //
-    !std::convertible_to<T, T &> &&           //
-    std::convertible_to<T, const T &> &&      //
-    std::assignable_from<T &, T> &&           //
-    !std::assignable_from<T &, const T> &&    //
-    !std::assignable_from<T &, T &> &&        //
-    !std::assignable_from<T &, const T &>;
+concept MoveOnly =                           //
+    std::is_object_v<T> &&                   //
+    std::is_nothrow_destructible_v<T> &&     //
+    std::is_constructible_v<T, T> &&         //
+    !std::is_constructible_v<T, const T> &&  //
+    !std::is_constructible_v<T, T&> &&       //
+    !std::is_constructible_v<T, const T&> && //
+    std::swappable<T> &&                     //
+    std::convertible_to<T, T> &&             //
+    std::convertible_to<T, const T> &&       //
+    !std::convertible_to<T, T&> &&           //
+    std::convertible_to<T, const T&> &&      //
+    std::assignable_from<T&, T> &&           //
+    !std::assignable_from<T&, const T> &&    //
+    !std::assignable_from<T&, T&> &&         //
+    !std::assignable_from<T&, const T&>;
 
 namespace mpsc {
 
@@ -39,10 +39,10 @@ public:
     Builder() = default;
     ~Builder() = default;
 
-    Builder(Builder &&) = delete;
-    Builder(const Builder &) = delete;
-    auto operator=(Builder &&) -> Builder & = delete;
-    auto operator=(const Builder &) -> Builder & = delete;
+    Builder(Builder&&) = delete;
+    Builder(const Builder&) = delete;
+    auto operator=(Builder&&) -> Builder& = delete;
+    auto operator=(const Builder&) -> Builder& = delete;
 
     auto Build() -> std::shared_ptr<Queue<T>> {
       return std::shared_ptr<Queue<T>>{new Queue<T>{}};
@@ -51,12 +51,12 @@ public:
 
   ~Queue() = default;
 
-  Queue(Queue &&) = delete;
-  Queue(const Queue &) = delete;
-  Queue &operator=(Queue &&) = delete;
-  Queue &operator=(const Queue &) = delete;
+  Queue(Queue&&) = delete;
+  Queue(const Queue&) = delete;
+  Queue& operator=(Queue&&) = delete;
+  Queue& operator=(const Queue&) = delete;
 
-  auto Push(T &&item) -> void {
+  auto Push(T&& item) -> void {
     std::lock_guard<std::mutex> lock{mutex_};
     queue_.push(std::move(item));
     condition_variable_.notify_one();
@@ -80,35 +80,39 @@ private:
 
 } // namespace impl
 
-template <typename T> class Tx {
+template <typename T>
+  requires MoveOnly<T>
+class Tx {
 public:
-  Tx(const std::shared_ptr<impl::Queue<T>> &queue) : queue_{queue} {}
+  Tx(const std::shared_ptr<impl::Queue<T>>& queue) : queue_{queue} {}
 
-  Tx(Tx &&) = default;
+  Tx(Tx&&) = default;
   ~Tx() = default;
-  Tx &operator=(Tx &&) = default;
+  Tx& operator=(Tx&&) = default;
 
-  Tx(const Tx &) = delete;
-  Tx &operator=(const Tx &) = delete;
+  Tx(const Tx&) = delete;
+  Tx& operator=(const Tx&) = delete;
 
   auto Clone() const -> Tx<T> { return Tx<T>{queue_}; }
 
-  auto Send(T &&item) const -> void { queue_->Push(std::move(item)); }
+  auto Send(T&& item) const -> void { queue_->Push(std::move(item)); }
 
 private:
   std::shared_ptr<impl::Queue<T>> queue_;
 };
 
-template <typename T> class Rx {
+template <typename T>
+  requires MoveOnly<T>
+class Rx {
 public:
-  Rx(const std::shared_ptr<impl::Queue<T>> &queue) : queue_{queue} {}
+  Rx(const std::shared_ptr<impl::Queue<T>>& queue) : queue_{queue} {}
 
-  Rx(Rx &&) = default;
+  Rx(Rx&&) = default;
   ~Rx() = default;
-  Rx &operator=(Rx &&) = default;
+  Rx& operator=(Rx&&) = default;
 
-  Rx(const Rx &) = delete;
-  Rx &operator=(const Rx &) = delete;
+  Rx(const Rx&) = delete;
+  Rx& operator=(const Rx&) = delete;
 
   auto Receive() const -> T { return queue_->Pop(); }
 
@@ -116,16 +120,18 @@ private:
   std::shared_ptr<impl::Queue<T>> queue_;
 };
 
-template <typename T> struct Channel {
+template <typename T>
+  requires MoveOnly<T>
+struct Channel {
   class Builder {
   public:
     Builder() = default;
     ~Builder() = default;
 
-    Builder(Builder &&) = delete;
-    Builder(const Builder &) = delete;
-    auto operator=(Builder &&) -> Builder & = delete;
-    auto operator=(const Builder &) -> Builder & = delete;
+    Builder(Builder&&) = delete;
+    Builder(const Builder&) = delete;
+    auto operator=(Builder&&) -> Builder& = delete;
+    auto operator=(const Builder&) -> Builder& = delete;
 
     auto Build() -> Channel<T> {
       auto queue = typename impl::Queue<T>::Builder{}.Build();
@@ -138,15 +144,15 @@ template <typename T> struct Channel {
   Tx<T> tx;
   Rx<T> rx;
 
-  Channel(Channel &&) = default;
+  Channel(Channel&&) = default;
   ~Channel() = default;
-  auto operator=(Channel &&) -> Channel & = default;
+  auto operator=(Channel&&) -> Channel& = default;
 
-  Channel(const Channel &) = delete;
-  auto operator=(const Channel &) -> Channel & = delete;
+  Channel(const Channel&) = delete;
+  auto operator=(const Channel&) -> Channel& = delete;
 
 private:
-  Channel(Tx<T> &&tx, Rx<T> &&rx) : tx{std::move(tx)}, rx{std::move(rx)} {}
+  Channel(Tx<T>&& tx, Rx<T>&& rx) : tx{std::move(tx)}, rx{std::move(rx)} {}
 };
 
 } // namespace mpsc

@@ -5,25 +5,25 @@ struct Message {
   int id;
   std::string text;
 
-  Message(int id, std::string &&text) : id(id), text(std::move(text)) {}
+  Message(int id, std::string&& text) : id(id), text(std::move(text)) {}
 
-  Message(Message &&) = default;
+  Message(Message&&) = default;
   ~Message() = default;
-  Message &operator=(Message &&) = default;
+  Message& operator=(Message&&) = default;
 
-  Message(const Message &) = delete;
-  Message &operator=(const Message &) = delete;
+  Message(const Message&) = delete;
+  Message& operator=(const Message&) = delete;
 };
 
 struct CopyableMessage {
   int id;
   std::string text;
 
-  CopyableMessage(int id, std::string &&text) : id(id), text(std::move(text)) {}
+  CopyableMessage(int id, std::string&& text) : id(id), text(std::move(text)) {}
 
-  CopyableMessage(const CopyableMessage &) = default;
+  CopyableMessage(const CopyableMessage&) = default;
   ~CopyableMessage() = default;
-  CopyableMessage &operator=(const CopyableMessage &) = default;
+  CopyableMessage& operator=(const CopyableMessage&) = default;
 };
 
 TEST(QueueTest, Create) {
