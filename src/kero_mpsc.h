@@ -6,6 +6,25 @@
 #include <mutex>
 #include <queue>
 
+#define KERO_STRUCT_TYPE_PIN(strt)                                             \
+  strt(strt&&) = delete;                                                       \
+  strt(const strt&) = delete;                                                  \
+  auto operator=(strt&&) -> strt& = delete;                                    \
+  auto operator=(const strt&) -> strt& = delete
+
+#define KERO_STRUCT_TYPE_MOVE(strt)                                            \
+  strt(strt&&) = default;                                                      \
+  auto operator=(strt&&) -> strt& = default;                                   \
+                                                                               \
+  strt(const strt&) = delete;                                                  \
+  auto operator=(const strt&) -> strt& = delete
+
+#define KERO_STRUCT_TYPE_COPY(strt)                                            \
+  strt(strt&&) = default;                                                      \
+  strt(const strt&) = default;                                                 \
+  auto operator=(strt&&) -> strt& = default;                                   \
+  auto operator=(const strt&) -> strt& = default
+
 namespace kero {
 
 template <typename T>
@@ -38,11 +57,7 @@ public:
   public:
     Builder() = default;
     ~Builder() = default;
-
-    Builder(Builder&&) = delete;
-    Builder(const Builder&) = delete;
-    auto operator=(Builder&&) -> Builder& = delete;
-    auto operator=(const Builder&) -> Builder& = delete;
+    KERO_STRUCT_TYPE_PIN(Builder);
 
     auto Build() -> std::shared_ptr<Queue<T>> {
       return std::shared_ptr<Queue<T>>{new Queue<T>{}};
@@ -50,11 +65,7 @@ public:
   };
 
   ~Queue() = default;
-
-  Queue(Queue&&) = delete;
-  Queue(const Queue&) = delete;
-  Queue& operator=(Queue&&) = delete;
-  Queue& operator=(const Queue&) = delete;
+  KERO_STRUCT_TYPE_PIN(Queue);
 
   auto Push(T&& item) -> void {
     std::lock_guard<std::mutex> lock{mutex_};
@@ -85,16 +96,10 @@ template <typename T>
 class Tx {
 public:
   Tx(const std::shared_ptr<impl::Queue<T>>& queue) : queue_{queue} {}
-
-  Tx(Tx&&) = default;
   ~Tx() = default;
-  Tx& operator=(Tx&&) = default;
-
-  Tx(const Tx&) = delete;
-  Tx& operator=(const Tx&) = delete;
+  KERO_STRUCT_TYPE_MOVE(Tx);
 
   auto Clone() const -> Tx<T> { return Tx<T>{queue_}; }
-
   auto Send(T&& item) const -> void { queue_->Push(std::move(item)); }
 
 private:
@@ -106,13 +111,8 @@ template <typename T>
 class Rx {
 public:
   Rx(const std::shared_ptr<impl::Queue<T>>& queue) : queue_{queue} {}
-
-  Rx(Rx&&) = default;
   ~Rx() = default;
-  Rx& operator=(Rx&&) = default;
-
-  Rx(const Rx&) = delete;
-  Rx& operator=(const Rx&) = delete;
+  KERO_STRUCT_TYPE_MOVE(Rx);
 
   auto Receive() const -> T { return queue_->Pop(); }
 
@@ -127,11 +127,7 @@ struct Channel {
   public:
     Builder() = default;
     ~Builder() = default;
-
-    Builder(Builder&&) = delete;
-    Builder(const Builder&) = delete;
-    auto operator=(Builder&&) -> Builder& = delete;
-    auto operator=(const Builder&) -> Builder& = delete;
+    KERO_STRUCT_TYPE_PIN(Builder);
 
     auto Build() -> Channel<T> {
       auto queue = typename impl::Queue<T>::Builder{}.Build();
@@ -144,12 +140,8 @@ struct Channel {
   Tx<T> tx;
   Rx<T> rx;
 
-  Channel(Channel&&) = default;
   ~Channel() = default;
-  auto operator=(Channel&&) -> Channel& = default;
-
-  Channel(const Channel&) = delete;
-  auto operator=(const Channel&) -> Channel& = delete;
+  KERO_STRUCT_TYPE_MOVE(Channel);
 
 private:
   Channel(Tx<T>&& tx, Rx<T>&& rx) : tx{std::move(tx)}, rx{std::move(rx)} {}
