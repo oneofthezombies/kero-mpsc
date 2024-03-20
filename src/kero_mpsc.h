@@ -1,9 +1,10 @@
-#ifndef KERO_MPSC_H
-#define KERO_MPSC_H
+#ifndef KERO_MPSC_KERO_MPSC_H
+#define KERO_MPSC_KERO_MPSC_H
 
 #include <condition_variable>
 #include <memory>
 #include <mutex>
+#include <optional>
 #include <queue>
 
 #define KERO_STRUCT_TYPE_PIN(strt)                                             \
@@ -81,6 +82,16 @@ public:
     return item;
   }
 
+  auto TryPop() -> std::optional<T> {
+    std::lock_guard<std::mutex> lock{mutex_};
+    if (queue_.empty()) {
+      return std::nullopt;
+    }
+    auto item = std::move(queue_.front());
+    queue_.pop();
+    return item;
+  }
+
   auto TryPopAll() -> std::queue<T> {
     std::lock_guard<std::mutex> lock{mutex_};
     auto queue = std::move(queue_);
@@ -121,6 +132,7 @@ public:
   KERO_STRUCT_TYPE_MOVE(Rx);
 
   auto Receive() const -> T { return queue_->Pop(); }
+  auto TryReceive() const -> std::optional<T> { return queue_->TryPop(); }
   auto TryReceiveAll() const -> std::queue<T> { return queue_->TryPopAll(); }
 
 private:
@@ -157,4 +169,4 @@ private:
 } // namespace mpsc
 } // namespace kero
 
-#endif // KERO_MPSC_H
+#endif // KERO_MPSC_KERO_MPSC_H

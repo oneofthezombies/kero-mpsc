@@ -44,6 +44,34 @@ TEST(QueueTest, PushAndPop) {
   ASSERT_EQ(popped.text, "Hello, World!");
 }
 
+TEST(QueueTest, TryPop) {
+  auto queue = kero::mpsc::impl::Queue<Message>::Builder{}.Build();
+
+  {
+    auto popped = queue->TryPop();
+    ASSERT_FALSE(popped);
+  }
+
+  {
+    auto message = Message{1, "Hello, World!"};
+    queue->Push(std::move(message));
+    ASSERT_EQ(message.id, 1);
+    ASSERT_EQ(message.text, "");
+  }
+
+  {
+    auto popped = queue->TryPop();
+    ASSERT_TRUE(popped);
+    ASSERT_EQ(popped->id, 1);
+    ASSERT_EQ(popped->text, "Hello, World!");
+  }
+
+  {
+    auto popped = queue->TryPop();
+    ASSERT_FALSE(popped);
+  }
+}
+
 TEST(QueueTest, TryPopAll) {
   auto queue = kero::mpsc::impl::Queue<Message>::Builder{}.Build();
 
@@ -199,6 +227,41 @@ TEST(RxTest, Receive) {
   auto popped = rx.Receive();
   ASSERT_EQ(popped.id, 1);
   ASSERT_EQ(popped.text, "Hello, World!");
+}
+
+TEST(RxTest, TryReceive) {
+  auto queue = kero::mpsc::impl::Queue<Message>::Builder{}.Build();
+  ASSERT_EQ(queue.use_count(), 1);
+
+  auto tx = kero::mpsc::Tx<Message>{queue};
+  ASSERT_EQ(queue.use_count(), 2);
+
+  auto rx = kero::mpsc::Rx<Message>{queue};
+  ASSERT_EQ(queue.use_count(), 3);
+
+  {
+    auto popped = rx.TryReceive();
+    ASSERT_FALSE(popped);
+  }
+
+  {
+    auto message = Message{1, "Hello, World!"};
+    tx.Send(std::move(message));
+    ASSERT_EQ(message.id, 1);
+    ASSERT_EQ(message.text, "");
+  }
+
+  {
+    auto popped = rx.TryReceive();
+    ASSERT_TRUE(popped);
+    ASSERT_EQ(popped->id, 1);
+    ASSERT_EQ(popped->text, "Hello, World!");
+  }
+
+  {
+    auto popped = rx.TryReceive();
+    ASSERT_FALSE(popped);
+  }
 }
 
 TEST(RxTest, TryReceiveAll) {
